@@ -5,7 +5,7 @@ DASHES = "-" * CHARS_PER_CELL
 SEPARATOR = "|"
 SPACE = " "
 
-def table_print(stuffs):
+def print_table(stuffs):
 
     def print_empty_cells(number):
         print(SEPARATOR, end="")
