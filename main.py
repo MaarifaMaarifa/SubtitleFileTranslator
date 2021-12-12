@@ -5,23 +5,33 @@ import sys
 import os
 
 
-# A blueprint for the line in the subtitle file
+# A blueprint for a line in the subtitle file
 class Line:
     def __init__(self, line):
         self.line = line
 
-    def is_content_number(self):
+    def is_content(self):
+        is_number_line = False
+        is_timestamp_line = False
+        is_empty_line = False
+        is_content = False
+
         try:
             int(self.line)
-            return True
+            is_number_line = True
         except ValueError:
-            return False
+            pass              # Pass keyword is useful in this case and not bad coding as what it normally is
 
-    def is_content(self):
-        if self.line != "\n" and not self.is_content_number() and "-->" not in self.line:
-            return True
-        else:
-            return False
+        if " --> " in self.line:
+            is_timestamp_line = True
+        
+        if self.line == "\n":
+            is_empty_line = True
+
+        if not is_empty_line and not is_number_line and not is_timestamp_line:
+            is_content = True
+
+        return is_content
 
 
 # Function to get the language code
@@ -29,7 +39,6 @@ def get_lang_code(lang):
     for langcode, language in LANGUAGES.items():
         if lang == language:
             return langcode
-
 
 # Function to update the output file when obtaining the translations back
 def update_output(file_name, input_file_lines):
@@ -60,12 +69,13 @@ langs = [LANGUAGES.get(lang) for lang in LANGUAGES]
 print("Choose one of the language from the table for the destination language")
 print_table(langs)
 
+# Taking user inputs with exceptions for missing files handled
 while True:
     destination_language = input(f"Enter the destination language: ")
     if destination_language in LANGUAGES.values():
         break
     else:
-        sys.stderr.write(f"Language {destination_language} not found, input again.\n")
+        sys.stderr.write(f"Language '{destination_language}' not found, input again.\n")
 
 while True:
     subtitle_file = input("Enter the full path to the subtitle file: ")
@@ -81,6 +91,7 @@ parser = ConfigParser()
 
 translation_resumable = False
 last_translated_line = 0
+
 if os.path.isfile(config_file):
     parser.read(config_file)
     if subtitle_file in parser['filenames']:
@@ -99,45 +110,40 @@ else:
 # Choosing to read from the output file or the input file depending on resumable state
 if translation_resumable:
     with open(output_file_path, "r") as file:
-        lines = file.readlines()
+        subtitle_file_lines = file.readlines()
 else:
     with open(subtitle_file, "r") as file:
-        lines = file.readlines()
+        subtitle_file_lines = file.readlines()
 
 translator = Translator()
 
-total_lines = len(lines)
+total_lines = len(subtitle_file_lines)
 
-for index, line in enumerate(lines):
+for index, line in enumerate(subtitle_file_lines):
     current_line_number = index + 1  # Added one since natural counting starts at that number
-    percentage_progress = (current_line_number / total_lines) * 100
+    percentage_progress = round((current_line_number / total_lines) * 100, 2)
     
     if index < last_translated_line:
         continue
     
-    print(f"Percentage completion: {percentage_progress}%")
+    print(f"Progress: {percentage_progress}%")
 
-    current_line = Line(line)
-
-    if current_line.is_content():
-        translated_line = ""
+    if Line(line).is_content():
         try:
-            translated_line = translator.translate(line, dest=get_lang_code(destination_language)).text
+            translated_line = translator.translate(line, dest=get_lang_code(destination_language))
         except:
             sys.stderr.write("Something went wrong!, Try checking your internet connection.\n")
             write_config(index)
             exit(1)
 
-        if "\n" not in translated_line:
-            translated_line += "\n"
-        if translated_line == line:
-            sys.stderr.write("Google translate API failure, try again after a few minutes.\n")
+        if translated_line._response.is_error:
+            sys.stderr.write("Google translate API error!, try again after a few minutes.\n")
             write_config(index)
             exit(1)
 
-        lines[index] = translated_line
+        subtitle_file_lines[index] = translated_line.text + "\n"       # Appending a newline character as google API removes it 
 
-    update_output(output_file_path, lines)
+    update_output(output_file_path, subtitle_file_lines)
 
 print(f"Done, file saved in the path: {output_file_path}")
 write_config("completed")
