@@ -14,6 +14,7 @@ Features:
 ->Supports record keeping on multiple subtitle files to be translated for better resuming.
 
 
-Requiremets:
+Requirements:
 
 Install the googletrans package via pip ( pip install googletrans )
+Sometimes the googletrans package can throw an error, installing the alpha version will fix the problem -> ( pip install googletrans==4.0.0-rc1 )
