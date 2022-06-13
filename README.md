@@ -5,16 +5,18 @@
 
 Translate a Subtitle file from one language to another using the Google Translate API.
 
-Features:
+##  **Features:**
 
-->Supports many languages as it uses the google API.
+* Supports many languages as it uses the google API.  
+* Supports resuming as the API fails sometimes due to many requests.  
+* Supports record keeping on multiple subtitle files to be translated for better resuming.  
 
-->Supports resuming as the API fails sometimes due to many requests.
-
-->Supports record keeping on multiple subtitle files to be translated for better resuming.
-
-
-Requirements:
-
-Install the googletrans package via pip ( pip install googletrans )
-Sometimes the googletrans package can throw an error, installing the alpha version will fix the problem -> ( pip install googletrans==4.0.0-rc1 )
+### Requirements  
+ Install the googletrans package via pip
+```sh
+pip install googletrans
+```
+Sometimes the googletrans package can throw an error, installing the alpha version will fix the problem 
+```sh
+pip install googletrans==4.0.0-rc1
+```
